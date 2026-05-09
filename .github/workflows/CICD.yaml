@@ -40,6 +40,14 @@
 
        - name: Run new container
          run: docker run -d -p 5000:5000 --name nodejs-app-container kofipap/nodejs-app:latest
+       
+       - name: Run new container
+         run: |
+           docker run -d \
+           -p 5000:5000 \
+           --name nodejs-app-container \
+           -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+           kofipap/nodejs-app:latest
 
        
        
