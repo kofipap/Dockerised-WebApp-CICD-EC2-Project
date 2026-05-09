@@ -1,0 +1,49 @@
+ name: CICD
+
+ on:
+   push:
+      branches: [master]
+
+ jobs:
+   build:
+     runs-on: ubuntu-latest
+
+     steps:
+       - name: Checkout source
+         uses: actions/checkout@v4
+
+       - name: Login to Docker hub
+         run: |
+           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+       - name: Build Docker Image
+         run: docker build -t kofipap/nodejs-app:latest .
+
+       - name: Push image to Docker hub
+         run: docker push kofipap/nodejs-app:latest
+
+   deploy:
+     needs: build
+     runs-on: self-hosted
+
+     steps: 
+       - name: Pull image from Docker hub
+         run: docker pull kofipap/nodejs-app:latest
+
+       - name: Stop old container (ignore errors)
+         run: docker rm -f nodejs-app-container || true
+       
+       - name: Remove unused images
+         run: docker image prune -af 
+
+       - name: Run new container
+         run: docker run -d -p 5000:5000 --name nodejs-app-container kofipap/nodejs-app:latest
+
+       - name: Run new container
+         run: |
+           docker run -d \
+           -p 5000:5000 \
+           --restart unless stopped \
+           --name nodejs-app-container \
+           kofipap/nodejs-app:latest
+       
