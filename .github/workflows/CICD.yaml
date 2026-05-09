@@ -41,11 +41,5 @@
        - name: Run new container
          run: docker run -d -p 5000:5000 --name nodejs-app-container kofipap/nodejs-app:latest
 
-       - name: Run new container
-         run: |
-           docker run -d \
-           -p 5000:5000 \
-           --restart unless stopped \
-           --name nodejs-app-container \
-           kofipap/nodejs-app:latest
+       
        
