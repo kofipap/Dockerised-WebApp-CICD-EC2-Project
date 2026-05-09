@@ -1,53 +1,52 @@
- name: CICD
+name: CICD
 
- on:
-   push:
-      branches: [master]
+on:
+  push:
+    branches: [master]
 
- jobs:
-   build:
-     runs-on: ubuntu-latest
+jobs:
 
-     steps:
-       - name: Checkout source
-         uses: actions/checkout@v4
+  build:
+    runs-on: ubuntu-latest
 
-       - name: Login to Docker hub
-         run: |
-           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    steps:
 
-       - name: Build Docker Image
-         run: docker build -t kofipap/nodejs-app:latest .
+      - name: Checkout source
+        uses: actions/checkout@v4
 
-       - name: Push image to Docker hub
-         run: docker push kofipap/nodejs-app:latest
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
-   deploy:
-     needs: build
-     runs-on: self-hosted
+      - name: Build Docker Image
+        run: docker build -t kofipap/nodejs-app:latest .
 
-     steps: 
-       - name: Pull image from Docker hub
-         run: docker pull kofipap/nodejs-app:latest
+      - name: Push image to Docker Hub
+        run: docker push kofipap/nodejs-app:latest
 
-       - name: Stop and remove old container
-         run: |
-             docker stop nodejs-app-container || true
-              docker rm nodejs-app-container || true
-       
-       - name: Remove unused images
-         run: docker image prune -af 
 
-       - name: Run new container
-         run: docker run -d -p 5000:5000 --name nodejs-app-container kofipap/nodejs-app:latest
-       
-       - name: Run new container
-         run: |
-           docker run -d \
-           -p 5000:5000 \
-           --name nodejs-app-container \
-           -e MONGO_URI="${{ secrets.MONGO_URI }}" \
-           kofipap/nodejs-app:latest
+  deploy:
+    needs: build
+    runs-on: self-hosted
 
-       
-       
+    steps:
+
+      - name: Pull image from Docker Hub
+        run: docker pull kofipap/nodejs-app:latest
+
+      - name: Stop and remove old container
+        run: |
+          docker stop nodejs-app-container || true
+          docker rm nodejs-app-container || true
+
+      - name: Run new container
+        run: |
+          docker run -d \
+          -p 5000:5000 \
+          --restart unless-stopped \
+          --name nodejs-app-container \
+          -e MONGO_URI="${{ secrets.MONGO_URI }}" \
+          kofipap/nodejs-app:latest
+
+      - name: Cleanup unused images
+        run: docker image prune -af
