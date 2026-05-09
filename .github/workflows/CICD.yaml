@@ -30,8 +30,10 @@
        - name: Pull image from Docker hub
          run: docker pull kofipap/nodejs-app:latest
 
-       - name: Stop old container (ignore errors)
-         run: docker rm -f nodejs-app-container || true
+       - name: Stop and remove old container
+         run: |
+             docker stop nodejs-app-container || true
+              docker rm nodejs-app-container || true
        
        - name: Remove unused images
          run: docker image prune -af 
